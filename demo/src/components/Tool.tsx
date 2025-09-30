@@ -4,7 +4,7 @@
 // This source code is licensed under the license found in the
 // LICENSE file in the root directory of this source tree.
 
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useState, useRef } from "react";
 import AppContext from "./hooks/createContext";
 import { ToolProps } from "./helpers/Interfaces";
 import * as _ from "underscore";
@@ -12,8 +12,9 @@ import * as _ from "underscore";
 const Tool = ({ handleMouseMove }: ToolProps) => {
   const {
     image: [image],
-    maskImg: [maskImg, setMaskImg],
+    maskImg: [maskImg],
   } = useContext(AppContext)!;
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Determine if we should shrink or grow the images to match the
   // width or the height of the page and setup a ResizeObserver to
@@ -41,32 +42,48 @@ const Tool = ({ handleMouseMove }: ToolProps) => {
     };
   }, [image]);
 
-  const imageClasses = "";
-  const maskImageClasses = `absolute opacity-40 pointer-events-none`;
+  useEffect(() => {
+    if (maskImg && canvasRef.current) {
+      const ctx = canvasRef.current.getContext("2d");
+      if (ctx) {
+        canvasRef.current.width = maskImg.width;
+        canvasRef.current.height = maskImg.height;
+        ctx.drawImage(maskImg, 0, 0);
+      }
+    }
+  }, [maskImg]);
 
-  // Render the image and the predicted mask image on top
+  const imageClasses = "";
+
+  // Render the image and a canvas on top
   return (
-    <>
+    <div
+      className={`relative ${
+        shouldFitToWidth ? "w-full" : "h-full"
+      }`}
+    >
       {image && (
         <img
           onMouseMove={handleMouseMove}
-          onMouseOut={() => _.defer(() => setMaskImg(null))}
           onTouchStart={handleMouseMove}
           src={image.src}
-          className={`${
-            shouldFitToWidth ? "w-full" : "h-full"
-          } ${imageClasses}`}
+          className="w-full h-full"
         ></img>
       )}
-      {maskImg && (
-        <img
-          src={maskImg.src}
-          className={`${
-            shouldFitToWidth ? "w-full" : "h-full"
-          } ${maskImageClasses}`}
-        ></img>
-      )}
-    </>
+      <canvas
+        ref={canvasRef}
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100%",
+          opacity: 0.4,
+          pointerEvents: "none",
+          zIndex: 10,
+        }}
+      ></canvas>
+    </div>
   );
 };
 

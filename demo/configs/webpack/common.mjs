@@ -4,19 +4,23 @@
 // This source code is licensed under the license found in the
 // LICENSE file in the root directory of this source tree.
 
-const { resolve } = require("path");
-const HtmlWebpackPlugin = require("html-webpack-plugin");
-const FriendlyErrorsWebpackPlugin = require("friendly-errors-webpack-plugin");
-const CopyPlugin = require("copy-webpack-plugin");
-const webpack = require("webpack");
+import { resolve, dirname } from "path";
+import { fileURLToPath } from "url";
+import HtmlWebpackPlugin from "html-webpack-plugin";
+import FriendlyErrorsWebpackPlugin from "friendly-errors-webpack-plugin";
+import CopyPlugin from "copy-webpack-plugin";
+import webpack from "webpack";
 
-module.exports = {
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+export default {
   entry: "./src/index.tsx",
   resolve: {
     extensions: [".js", ".jsx", ".ts", ".tsx"],
   },
   output: {
-    path: resolve(__dirname, "dist"),
+    path: resolve(__dirname, "..", "..", "dist"),
   },
   module: {
     rules: [
@@ -61,7 +65,11 @@ module.exports = {
       patterns: [
         {
           from: "node_modules/onnxruntime-web/dist/*.wasm",
-          to: "[name][ext]",
+          to: "js/[name][ext]",
+        },
+        {
+          from: "node_modules/onnxruntime-web/dist/*.mjs",
+          to: "js/[name][ext]",
         },
         {
           from: "model",
@@ -80,5 +88,14 @@ module.exports = {
     new webpack.ProvidePlugin({
       process: "process/browser",
     }),
+    new webpack.ContextReplacementPlugin(
+      /onnxruntime-web/,
+      (data) => {
+        for (const dependency of data.dependencies) {
+          delete dependency.critical;
+        }
+        return data;
+      }
+    ),
   ],
 };

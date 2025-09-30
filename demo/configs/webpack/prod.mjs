@@ -5,12 +5,16 @@
 // LICENSE file in the root directory of this source tree.
 
 // production config
-const { merge } = require("webpack-merge");
-const { resolve } = require("path");
-const Dotenv = require("dotenv-webpack");
-const commonConfig = require("./common");
+import { merge } from "webpack-merge";
+import { resolve, dirname } from "path";
+import { fileURLToPath } from "url";
+import Dotenv from "dotenv-webpack";
+import commonConfig from "./common.mjs";
 
-module.exports = merge(commonConfig, {
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+export default merge(commonConfig, {
   mode: "production",
   output: {
     filename: "js/bundle.[contenthash].min.js",
