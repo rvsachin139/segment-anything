@@ -53,21 +53,17 @@ const Tool = ({ handleMouseMove }: ToolProps) => {
     }
   }, [maskImg]);
 
-  const imageClasses = "";
-
   // Render the image and a canvas on top
   return (
-    <div
-      className={`relative ${
-        shouldFitToWidth ? "w-full" : "h-full"
-      }`}
-    >
+    <>
       {image && (
         <img
           onMouseMove={handleMouseMove}
           onTouchStart={handleMouseMove}
           src={image.src}
-          className="w-full h-full"
+          className={`${
+            shouldFitToWidth ? "w-full" : "h-full"
+          } object-contain`}
         ></img>
       )}
       <canvas
@@ -83,7 +79,7 @@ const Tool = ({ handleMouseMove }: ToolProps) => {
           zIndex: 10,
         }}
       ></canvas>
-    </div>
+    </>
   );
 };
 

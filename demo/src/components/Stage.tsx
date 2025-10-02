@@ -39,9 +39,7 @@ const Stage = () => {
   const flexCenterClasses = "flex items-center justify-center";
   return (
     <div className={`${flexCenterClasses} w-full h-full`}>
-      <div className={`${flexCenterClasses} relative w-[90%] h-[90%]`}>
-        <Tool handleMouseMove={handleMouseMove} />
-      </div>
+      <Tool handleMouseMove={handleMouseMove} />
     </div>
   );
 };
