@@ -6,15 +6,16 @@
 
 import React, { useContext, useEffect, useState, useRef } from "react";
 import AppContext from "./hooks/createContext";
-import { ToolProps } from "./helpers/Interfaces";
-import * as _ from "underscore";
+import { ToolProps, modelInputProps } from "./helpers/Interfaces";
 
-const Tool = ({ handleMouseMove }: ToolProps) => {
+const Tool = ({ handleLeftClick, handleRightClick, stageRef }: ToolProps) => {
   const {
     image: [image],
     maskImg: [maskImg],
+    clicks: [clicks],
   } = useContext(AppContext)!;
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const imageRef = useRef<HTMLImageElement>(null);
 
   // Determine if we should shrink or grow the images to match the
   // width or the height of the page and setup a ResizeObserver to
@@ -42,43 +43,90 @@ const Tool = ({ handleMouseMove }: ToolProps) => {
     };
   }, [image]);
 
+  // Draw mask and click points on canvas overlaying the image
   useEffect(() => {
-    if (maskImg && canvasRef.current) {
-      const ctx = canvasRef.current.getContext("2d");
-      if (ctx) {
-        canvasRef.current.width = maskImg.width;
-        canvasRef.current.height = maskImg.height;
-        ctx.drawImage(maskImg, 0, 0);
-      }
+    if (!imageRef.current || !stageRef?.current || !canvasRef.current || !image)
+      return;
+
+    const imgRect = imageRef.current.getBoundingClientRect();
+    const stageRect = stageRef.current.getBoundingClientRect();
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+
+    if (!ctx) return;
+
+    const dpr = window.devicePixelRatio || 1;
+
+    // Position canvas over the image
+    const left = imgRect.left - stageRect.left;
+    const top = imgRect.top - stageRect.top;
+    canvas.style.position = "absolute";
+    canvas.style.left = `${left}px`;
+    canvas.style.top = `${top}px`;
+    canvas.style.width = `${imgRect.width}px`;
+    canvas.style.height = `${imgRect.height}px`;
+    canvas.style.opacity = "0.4";
+    canvas.style.pointerEvents = "none";
+    canvas.style.zIndex = "10";
+
+    // Set canvas dimensions accounting for device pixel ratio
+    canvas.width = imgRect.width * dpr;
+    canvas.height = imgRect.height * dpr;
+    ctx.scale(dpr, dpr);
+
+    // Clear canvas
+    ctx.clearRect(0, 0, imgRect.width, imgRect.height);
+
+    // Draw mask if exists
+    if (maskImg) {
+      const naturalWidth = image.naturalWidth;
+      const naturalHeight = image.naturalHeight;
+      ctx.drawImage(
+        maskImg,
+        0,
+        0,
+        naturalWidth,
+        naturalHeight,
+        0,
+        0,
+        imgRect.width,
+        imgRect.height
+      );
     }
-  }, [maskImg]);
+
+    // Draw points if exist
+    if (clicks && clicks.length > 0) {
+      const naturalWidth = image.naturalWidth;
+      const naturalHeight = image.naturalHeight;
+
+      clicks.forEach((click: modelInputProps) => {
+        const displayedX = (click.x / naturalWidth) * imgRect.width;
+        const displayedY = (click.y / naturalHeight) * imgRect.height;
+
+        ctx.beginPath();
+        ctx.arc(displayedX, displayedY, 5, 0, 2 * Math.PI);
+        ctx.fillStyle = click.clickType === 1 ? "green" : "red";
+        ctx.fill();
+        ctx.strokeStyle = "white";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      });
+    }
+  }, [maskImg, clicks, image, stageRef]);
 
   // Render the image and a canvas on top
   return (
     <>
       {image && (
         <img
-          onMouseMove={handleMouseMove}
-          onTouchStart={handleMouseMove}
+          ref={imageRef}
+          onClick={handleLeftClick}
+          onContextMenu={handleRightClick}
           src={image.src}
-          className={`${
-            shouldFitToWidth ? "w-full" : "h-full"
-          } object-contain`}
-        ></img>
+          className={`${shouldFitToWidth ? "w-full" : "h-full"} object-contain`}
+        />
       )}
-      <canvas
-        ref={canvasRef}
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          width: "100%",
-          height: "100%",
-          opacity: 0.4,
-          pointerEvents: "none",
-          zIndex: 10,
-        }}
-      ></canvas>
+      <canvas ref={canvasRef} />
     </>
   );
 };

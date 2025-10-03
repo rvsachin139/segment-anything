@@ -82,15 +82,25 @@ const App = () => {
       img.src = url.href;
       img.onload = () => {
         console.log("Image loaded successfully:", img.src);
-        const { height, width, samScale } = handleImageScale(img);
+        const {
+          height,
+          width,
+          samScale,
+          resizedHeight,
+          resizedWidth,
+          padTop,
+          padLeft,
+        } = handleImageScale(img);
         console.log("Image dimensions:", width, "x", height);
         setModelScale({
-          height: height, // original image height
-          width: width, // original image width
-          samScale: samScale, // scaling factor for image which has been resized to longest side 1024
+          height, // original image height
+          width, // original image width
+          samScale, // scaling factor for image which has been resized to longest side 1024
+          resizedHeight,
+          resizedWidth,
+          padTop,
+          padLeft,
         });
-        img.width = width;
-        img.height = height;
         setImage(img);
       };
       img.onerror = () => {
@@ -161,7 +171,8 @@ const App = () => {
         const maskImage = onnxMaskToImage(
           output.data,
           output.dims[2],
-          output.dims[3]
+          output.dims[3],
+          modelScale
         );
         console.log(
           "Mask image created:",

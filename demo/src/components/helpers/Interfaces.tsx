@@ -10,6 +10,10 @@ export interface modelScaleProps {
   samScale: number;
   height: number;
   width: number;
+  resizedHeight: number;
+  resizedWidth: number;
+  padTop: number;
+  padLeft: number;
 }
 
 export interface modelInputProps {
@@ -24,6 +28,10 @@ export interface modeDataProps {
   modelScale: modelScaleProps;
 }
 
+import { RefObject } from "react";
+
 export interface ToolProps {
-  handleMouseMove: (e: any) => void;
+  handleLeftClick: (e: React.MouseEvent<HTMLImageElement>) => void;
+  handleRightClick: (e: React.MouseEvent<HTMLImageElement>) => void;
+  stageRef: RefObject<HTMLDivElement>;
 }
